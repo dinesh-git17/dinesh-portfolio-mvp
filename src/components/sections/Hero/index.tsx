@@ -1,25 +1,62 @@
-// Hero section container with responsive grid layout and future canvas slot
+// path: src/components/sections/Hero/index.tsx
+// Hero section container with SSR text and client-side 3D integration
+// Preserves layout stability and prevents CLS during 3D mount
+
+import dynamic from 'next/dynamic';
+
 import HeroCopy from './HeroCopy';
 
-export default function Hero() {
+// Client-only dynamic import for 3D scene (no SSR)
+const Hero3D = dynamic(() => import('./Hero3D'), {
+  ssr: false,
+  loading: () => (
+    <div className='flex h-full w-full items-center justify-center'>
+      <div className='h-6 w-6 animate-spin rounded-full border-2 border-space-400 border-t-transparent' />
+    </div>
+  ),
+});
+
+export type HeroProps = {
+  /** Optional className for the <section> container */
+  className?: string;
+  /** Show FPS overlay during development */
+  debugFps?: boolean;
+};
+
+/**
+ * Hero section with SSR text content and client-side 3D galaxy visualization.
+ *
+ * Responsibility: Layout integration of text and 3D scene without CLS or SSR blocking.
+ *
+ * Maps to Jira Requirements:
+ * - AC1: Text renders immediately (SSR), 3D loads progressively ≤3s
+ * - Preserves existing semantic structure and accessibility features
+ * - Dynamic import prevents 3D from blocking SSR hydration
+ * - Reserved container space prevents cumulative layout shift
+ *
+ * Invariants:
+ * - HeroCopy renders server-side for SEO and LCP optimization
+ * - 3D content mounts client-only with proper fallback states
+ * - Layout grid remains stable during all loading phases
+ * - Accessibility structure maintains semantic relationships
+ */
+export default function Hero({ className = '', debugFps = false }: HeroProps) {
   return (
     <section
-      className='relative min-h-screen w-full overflow-hidden'
+      id='hero'
+      className={`relative min-h-screen w-full overflow-hidden ${className}`}
       role='banner'
-      aria-label='Hero section with portfolio introduction'
+      aria-labelledby='hero-title'
     >
-      {/* Background container for future galaxy canvas */}
+      {/* 3D Background Canvas - reserved space to prevent CLS */}
       <div className='absolute inset-0 z-0'>
-        {/* Placeholder gradient background until 3D canvas is implemented */}
-        <div className='h-full w-full bg-gradient-to-br from-space-950 via-stellar-900 to-nebula-950' />
-
-        {/* Canvas slot - will be replaced with galaxy visualization in ST-1 */}
-        <div
-          className='absolute inset-0'
-          data-testid='canvas-slot'
-          aria-hidden='true'
-        >
-          {/* Future: <GalaxyCanvas /> will mount here */}
+        {/* Fixed container dimensions to prevent layout shift */}
+        <div className='h-full w-full' style={{ minHeight: '100vh' }}>
+          <Hero3D
+            showFps={debugFps}
+            ariaLabel='Interactive galaxy background visualization'
+            className='absolute inset-0'
+          />
         </div>
       </div>
 
