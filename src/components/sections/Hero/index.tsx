@@ -2,6 +2,8 @@
 // Hero section container with SSR text and client-side 3D integration
 // Preserves layout stability and prevents CLS during 3D mount
 
+'use client';
+
 import dynamic from 'next/dynamic';
 
 import HeroCopy from './HeroCopy';
