@@ -60,14 +60,14 @@ export default function Hero({ className = '', debugFps = false }: HeroProps) {
       <StatusAnnouncerClient />
 
       {/* Content overlay with responsive grid */}
-      <div className='relative z-10 flex min-h-screen items-center'>
+      <div className='relative z-10 flex min-h-screen items-center pointer-events-none'>
         <div className='hero-grid w-full px-4 sm:px-6 lg:px-8'>
           {/* Left grid column - empty for spacing */}
           <div className='hidden lg:block' />
 
           {/* Center content column */}
           <div className='flex items-center justify-start'>
-            <div className='w-full max-w-3xl'>
+            <div className='w-full max-w-3xl pointer-events-auto'>
               <HeroCopy />
             </div>
           </div>
