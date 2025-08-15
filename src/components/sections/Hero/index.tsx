@@ -2,21 +2,15 @@
 // Hero section container with SSR text and client-side 3D integration
 // Preserves layout stability and prevents CLS during 3D mount
 
-'use client';
-
 import dynamic from 'next/dynamic';
 
 import HeroCopy from './HeroCopy';
 
-// Client-only dynamic import for 3D scene (no SSR)
-const Hero3D = dynamic(() => import('./Hero3D'), {
-  ssr: false,
-  loading: () => (
-    <div className='flex h-full w-full items-center justify-center'>
-      <div className='h-6 w-6 animate-spin rounded-full border-2 border-space-400 border-t-transparent' />
-    </div>
-  ),
-});
+// Dynamic import for 3D scene (SSR-safe via internal conditional rendering)
+const Hero3D = dynamic(() => import('./Hero3D'));
+
+// Dynamic import for accessibility announcer (SSR-safe via internal conditional rendering)
+const StatusAnnouncerClient = dynamic(() => import('./ui/StatusAnnouncer'));
 
 export type HeroProps = {
   /** Optional className for the <section> container */
@@ -61,6 +55,9 @@ export default function Hero({ className = '', debugFps = false }: HeroProps) {
           />
         </div>
       </div>
+
+      {/* Accessibility status announcer - client-only, positioned outside visual flow */}
+      <StatusAnnouncerClient />
 
       {/* Content overlay with responsive grid */}
       <div className='relative z-10 flex min-h-screen items-center'>
