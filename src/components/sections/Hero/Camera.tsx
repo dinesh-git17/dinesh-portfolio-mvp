@@ -74,10 +74,10 @@ export default function Camera({
         enablePan={false}
         enableDamping={false}
         // Touch support for mobile devices
-        touches={{
-          ONE: 2, // ROTATE
-          TWO: 0, // NONE (no zoom/pan)
-        }}
+        // touches={{
+        //   ONE: 1, // ROTATE
+        //   TWO: 0, // NONE (no zoom/pan)
+        // }}
       />
     </>
   );

@@ -181,6 +181,7 @@ export default function HeroCanvas({
     >
       <CanvasErrorBoundary onError={setError}>
         <Canvas
+          style={{ touchAction: 'none' }}
           dpr={[1, isMobile ? 1.5 : 2]}
           gl={{
             powerPreference: 'high-performance',
