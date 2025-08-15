@@ -1,15 +1,116 @@
-@import "tailwindcss";
+/* Tailwind CSS v4 with custom theme tokens for Hero section */
+@import 'tailwindcss';
 
 :root {
+  /* Base theme variables */
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Font families */
+  --font-geist-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono:
+    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
+    'DejaVu Sans Mono', monospace;
+
+  /* Galaxy-themed color palette for Hero section */
+  --color-space-50: #f0f4ff;
+  --color-space-100: #e0e9ff;
+  --color-space-200: #c7d7ff;
+  --color-space-300: #a5bcff;
+  --color-space-400: #8296ff;
+  --color-space-500: #6366f1;
+  --color-space-600: #4f46e5;
+  --color-space-700: #4338ca;
+  --color-space-800: #3730a3;
+  --color-space-900: #312e81;
+  --color-space-950: #1e1b4b;
+
+  /* Stellar accent colors */
+  --color-stellar-50: #fafafa;
+  --color-stellar-100: #f4f4f5;
+  --color-stellar-200: #e4e4e7;
+  --color-stellar-300: #d4d4d8;
+  --color-stellar-400: #a1a1aa;
+  --color-stellar-500: #71717a;
+  --color-stellar-600: #52525b;
+  --color-stellar-700: #3f3f46;
+  --color-stellar-800: #27272a;
+  --color-stellar-900: #18181b;
+  --color-stellar-950: #09090b;
+
+  /* Nebula purple accents */
+  --color-nebula-50: #faf5ff;
+  --color-nebula-100: #f3e8ff;
+  --color-nebula-200: #e9d5ff;
+  --color-nebula-300: #d8b4fe;
+  --color-nebula-400: #c084fc;
+  --color-nebula-500: #a855f7;
+  --color-nebula-600: #9333ea;
+  --color-nebula-700: #7c3aed;
+  --color-nebula-800: #6b21a8;
+  --color-nebula-900: #581c87;
+  --color-nebula-950: #3b0764;
+
+  /* Hero typography scale */
+  --font-size-hero-xl: 4rem;
+  --line-height-hero-xl: 1.1;
+  --letter-spacing-hero-xl: -0.02em;
+
+  --font-size-hero-lg: 3rem;
+  --line-height-hero-lg: 1.15;
+  --letter-spacing-hero-lg: -0.01em;
+
+  --font-size-hero-md: 2rem;
+  --line-height-hero-md: 1.2;
+  --letter-spacing-hero-md: 0;
+
+  --font-size-hero-sm: 1.25rem;
+  --line-height-hero-sm: 1.4;
+  --letter-spacing-hero-sm: 0;
+
+  /* Responsive spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-*: initial;
+  --color-space-50: #f0f4ff;
+  --color-space-100: #e0e9ff;
+  --color-space-200: #c7d7ff;
+  --color-space-300: #a5bcff;
+  --color-space-400: #8296ff;
+  --color-space-500: #6366f1;
+  --color-space-600: #4f46e5;
+  --color-space-700: #4338ca;
+  --color-space-800: #3730a3;
+  --color-space-900: #312e81;
+  --color-space-950: #1e1b4b;
+
+  --color-stellar-50: #fafafa;
+  --color-stellar-100: #f4f4f5;
+  --color-stellar-200: #e4e4e7;
+  --color-stellar-300: #d4d4d8;
+  --color-stellar-400: #a1a1aa;
+  --color-stellar-500: #71717a;
+  --color-stellar-600: #52525b;
+  --color-stellar-700: #3f3f46;
+  --color-stellar-800: #27272a;
+  --color-stellar-900: #18181b;
+  --color-stellar-950: #09090b;
+
+  --color-nebula-50: #faf5ff;
+  --color-nebula-100: #f3e8ff;
+  --color-nebula-200: #e9d5ff;
+  --color-nebula-300: #d8b4fe;
+  --color-nebula-400: #c084fc;
+  --color-nebula-500: #a855f7;
+  --color-nebula-600: #9333ea;
+  --color-nebula-700: #7c3aed;
+  --color-nebula-800: #6b21a8;
+  --color-nebula-900: #581c87;
+  --color-nebula-950: #3b0764;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +120,55 @@
   }
 }
 
+/* Animation definitions */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(99, 102, 241, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+  }
+}
+
+/* Base body styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Hero-specific utility classes */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr min(65ch, calc(100% - 2rem)) 1fr;
+  gap: 2rem;
+}
+
+.hero-grid-wide {
+  display: grid;
+  grid-template-columns: 1fr min(80ch, calc(100% - 2rem)) 1fr;
+  gap: 2rem;
 }
