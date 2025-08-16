@@ -110,9 +110,11 @@ export default function HeroCanvas({
 
   // Device capability detection on mount
   useEffect(() => {
+    let mounted = true;
     async function initializeCapabilities() {
       try {
         const caps = await evaluateDeviceCaps();
+        if (!mounted) return;
         setCaps(caps);
 
         if (!caps.isWebGLAvailable) {
@@ -121,7 +123,9 @@ export default function HeroCanvas({
         }
 
         setLoaded(true);
+        setError(undefined);
       } catch (error) {
+        if (!mounted) return;
         const message =
           error instanceof Error
             ? error.message
@@ -131,6 +135,9 @@ export default function HeroCanvas({
     }
 
     initializeCapabilities();
+    return () => {
+      mounted = false;
+    };
   }, [setCaps, setLoaded, setError]);
 
   // WebGL context loss/restore handling setup
@@ -144,6 +151,7 @@ export default function HeroCanvas({
     if (!glRef) return;
 
     const canvas = glRef.domElement;
+    const { setError, setLoaded } = useHeroStore.getState();
 
     const handleContextLost = (event: Event) => {
       event.preventDefault();
@@ -152,6 +160,7 @@ export default function HeroCanvas({
         console.warn('WebGL context lost');
       }
       setError('WebGL context lost');
+      setLoaded(false);
     };
 
     const handleContextRestore = () => {
@@ -163,14 +172,28 @@ export default function HeroCanvas({
       setLoaded(true);
     };
 
-    canvas.addEventListener('webglcontextlost', handleContextLost);
-    canvas.addEventListener('webglcontextrestored', handleContextRestore);
+    canvas.addEventListener(
+      'webglcontextlost',
+      handleContextLost as EventListener,
+      { passive: false }
+    );
+    canvas.addEventListener(
+      'webglcontextrestored',
+      handleContextRestore as EventListener,
+      { passive: true }
+    );
 
     return () => {
-      canvas.removeEventListener('webglcontextlost', handleContextLost);
-      canvas.removeEventListener('webglcontextrestored', handleContextRestore);
+      canvas.removeEventListener(
+        'webglcontextlost',
+        handleContextLost as EventListener
+      );
+      canvas.removeEventListener(
+        'webglcontextrestored',
+        handleContextRestore as EventListener
+      );
     };
-  }, [glRef, setError, setLoaded]);
+  }, [glRef]);
 
   return (
     <div

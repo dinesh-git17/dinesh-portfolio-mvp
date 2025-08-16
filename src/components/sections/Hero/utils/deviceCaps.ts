@@ -58,9 +58,13 @@ export function isMobileUA(): boolean {
   );
 }
 
+// WebGL context type alias for proper typing
+type GL = WebGLRenderingContext | WebGL2RenderingContext;
+
 /**
  * WebGL context detection with version capability checking
  * Tests WebGL2 first, falls back to WebGL1, handles failures gracefully
+ * Uses separate canvas elements to prevent context conflicts with R3F
  * @returns WebGL availability status with version and failure reason
  */
 export function detectWebGLVersion(): {
@@ -73,18 +77,24 @@ export function detectWebGLVersion(): {
   }
 
   try {
-    const canvas = document.createElement('canvas');
-
-    // Test WebGL2 first for best performance
-    const gl2 = canvas.getContext('webgl2');
+    // Test WebGL2 first - use dedicated canvas
+    const canvas2 = document.createElement('canvas');
+    const gl2 = canvas2.getContext('webgl2') as WebGL2RenderingContext | null;
     if (gl2) {
+      // Clean disposal to prevent context conflicts
+      const loseExt = gl2.getExtension('WEBGL_lose_context');
+      if (loseExt) loseExt.loseContext();
       return { available: true, version: 2 };
     }
 
-    // Fallback to WebGL1
-    const gl1 =
-      canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    // Test WebGL1 - use separate canvas to avoid conflicts
+    const canvas1 = document.createElement('canvas');
+    const gl1 = (canvas1.getContext('webgl') ||
+      canvas1.getContext('experimental-webgl')) as WebGLRenderingContext | null;
     if (gl1) {
+      // Clean disposal to prevent context conflicts
+      const loseExt = gl1.getExtension('WEBGL_lose_context');
+      if (loseExt) loseExt.loseContext();
       return { available: true, version: 1 };
     }
 
@@ -99,71 +109,88 @@ export function detectWebGLVersion(): {
 }
 
 /**
- * Lightweight FPS benchmark using requestAnimationFrame
- * Measures frame timing over specified duration for performance estimation
- * AC3 targets: ≥45fps mid-tier, ≥30fps low-tier devices
- * @param durationMs - Benchmark duration in milliseconds (default: 700ms)
- * @returns Promise resolving to estimated FPS
+ * Lightweight FPS benchmark for performance tier assignment
+ * Creates temporary off-screen rendering context to measure GPU performance
+ * @returns Promise resolving to estimated FPS capability
  */
-export function benchmarkFps(durationMs = 700): Promise<number> {
-  if (!isBrowser()) {
-    return Promise.resolve(30); // Conservative default for SSR
-  }
+export async function benchmarkFps(): Promise<number> {
+  if (!isBrowser()) return 30; // Conservative SSR default
 
   return new Promise(resolve => {
-    let frameCount = 0;
-    let startTime = 0;
+    const canvas = document.createElement('canvas');
+    canvas.width = 100;
+    canvas.height = 100;
+    canvas.style.position = 'absolute';
+    canvas.style.left = '-1000px';
+    canvas.style.top = '-1000px';
+    document.body.appendChild(canvas);
 
-    function frame(currentTime: number) {
-      if (startTime === 0) {
-        startTime = currentTime;
-      }
-
-      frameCount++;
-
-      if (currentTime - startTime < durationMs) {
-        requestAnimationFrame(frame);
-      } else {
-        const elapsed = currentTime - startTime;
-        const fps = (frameCount * 1000) / elapsed;
-        resolve(Math.round(fps));
-      }
+    const gl = (canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl')) as GL | null;
+    if (!gl) {
+      document.body.removeChild(canvas);
+      resolve(15); // Low-end fallback
+      return;
     }
 
-    requestAnimationFrame(frame);
+    // Simple rendering benchmark
+    let frames = 0;
+    const startTime = performance.now();
+    const duration = 500; // 500ms test
+
+    function renderFrame() {
+      if (!gl) return; // Additional null guard for closure
+
+      if (performance.now() - startTime >= duration) {
+        const fps = Math.round((frames * 1000) / duration);
+
+        // Clean up
+        const loseExt = gl.getExtension('WEBGL_lose_context');
+        if (loseExt) loseExt.loseContext();
+        document.body.removeChild(canvas);
+
+        resolve(Math.min(fps, 120)); // Cap at 120fps
+        return;
+      }
+
+      // Simple render operations
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      frames++;
+      requestAnimationFrame(renderFrame);
+    }
+
+    renderFrame();
   });
 }
 
 /**
- * Quality tier decision logic based on FPS benchmark and device type
- * Implements AC3 frame rate requirements and AC4 adaptation thresholds
- * Conservative mobile thresholds account for thermal throttling
- * @param fps - Estimated FPS from benchmark
- * @param isMobile - Mobile device detection result
- * @returns Quality tier assignment per AC3/AC4 specifications
+ * Quality tier selection based on device capabilities and FPS benchmark
+ * Implements AC3/AC4 performance thresholds with mobile-specific adjustments
+ * @param fps Estimated or measured FPS capability
+ * @param isMobile Mobile device flag for tier adjustment
+ * @returns Appropriate quality tier assignment
  */
 export function decideTier(fps: number, isMobile: boolean): QualityTier {
+  // Mobile tier caps per AC3 requirements
   if (isMobile) {
-    // Mobile tier thresholds (conservative due to thermal limits)
-    if (fps >= 50) return QualityTier.MEDIUM; // No HIGH tier for mobile
-    if (fps >= 35) return QualityTier.MEDIUM;
-    return QualityTier.LOW; // < 35fps
-  } else {
-    // Desktop tier thresholds (AC3: ≥45fps mid-tier requirement)
-    if (fps >= 55) return QualityTier.HIGH;
-    if (fps >= 40) return QualityTier.MEDIUM; // 40-54fps range
-    return QualityTier.LOW; // < 40fps
+    if (fps >= 50) return QualityTier.MEDIUM;
+    return QualityTier.LOW;
   }
+
+  // Desktop tier thresholds
+  if (fps >= 55) return QualityTier.HIGH;
+  if (fps >= 40) return QualityTier.MEDIUM;
+  return QualityTier.LOW;
 }
 
 /**
- * Comprehensive device capability evaluation with performance benchmarking
- * Main API for determining quality tier and render configuration
- * Handles SSR safety, WebGL detection, FPS benchmarking, and tier assignment
+ * Complete device capability evaluation
+ * Orchestrates all detection methods and returns comprehensive capability data
  * @returns Promise resolving to complete device capability assessment
  */
 export async function evaluateDeviceCaps(): Promise<DeviceCaps> {
-  // SSR safety: return conservative defaults for server-side rendering
+  // SSR safety fallback
   if (!isBrowser()) {
     return {
       isWebGLAvailable: false,

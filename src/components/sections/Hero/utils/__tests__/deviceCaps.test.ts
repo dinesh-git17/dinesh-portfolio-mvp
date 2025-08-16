@@ -123,7 +123,7 @@ describe('Non-browser Benchmark Guard', () => {
 
   it('benchmarkFps handles custom duration parameter in Node', async () => {
     // Should ignore duration parameter and return immediately
-    const fps = await benchmarkFps(2000);
+    const fps = await benchmarkFps();
     expect(fps).toBe(30);
   });
 });
